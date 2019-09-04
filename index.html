@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<script src="jquery.min.js" type="text/javascript" charset="utf-8"></script>
+		<script src="echarts.min.js" type="text/javascript" charset="utf-8"></script>
+	</head>
+	<body>
+		<div style="position: absolute;left: 0;top: 0;right: 0;bottom: 0;z-index: 10000;background: #061C33;display: flex;align-items: center;justify-content: center;">
+			<div id="map" style="width: 100%;height: 100%;"></div>
+		</div>
+		<script type="text/javascript">
+			function manage(id,GZData){
+				var echart = echarts.init(document.getElementById(id));			
+				var geoCoordMap = {
+				    '甘肃省':[103.73, 36.03],
+					'青海省':[101.74, 36.56],
+					'四川省':[104.06, 30.67],
+					'河北省':[114.48, 38.03],
+					'云南省':[102.73, 25.04],
+					'贵州省':[106.71, 26.57],
+					'湖北省':[114.31, 30.52],
+					'河南省':[113.65, 34.76],
+					'山东省':[117, 36.65],
+					'江苏省':[118.78, 32.04],
+					'安徽省':[117.27, 31.86],
+					'浙江省':[120.19, 30.26],
+					'江西省':[115.89, 28.68],
+					'福建省':[119.3, 26.08],
+					'广东省':[113.23, 23.16],
+					'湖南省':[113, 28.21],
+					'海南省':[110.35, 20.02],
+					'辽宁省':[123.38, 41.8],
+					'吉林省':[125.35, 43.88],
+					'黑龙江省':[126.63, 45.75],
+					'山西省':[112.53, 37.87],
+					'陕西省':[108.95, 34.27],
+					'台湾':[121.30, 25.03],
+					'北京市':[116.46, 39.92],
+					'上海市':[121.48, 31.22],
+					'重庆市':[106.54, 29.59],
+					'天津市':[117.2, 39.13],
+					'内蒙古自治区':[111.65, 40.82],
+					'广西壮族自治区':[108.33, 22.84],
+					'西藏自治区':[91.11, 29.97],
+					'宁夏回族自治区':[106.27, 38.47],
+					'新疆维吾尔族自治区':[87.68, 43.77],
+					'香港':[114.17, 22.28],
+					'澳门':[113.54, 22.19],
+				};
+				var planePath = 'path://M1705.06,1318.313v-89.254l-319.9-221.799l0.073-208.063c0.521-84.662-26.629-121.796-63.961-121.491c-37.332-0.305-64.482,36.829-63.961,121.491l0.073,208.063l-319.9,221.799v89.254l330.343-157.288l12.238,241.308l-134.449,92.931l0.531,42.034l175.125-42.917l175.125,42.917l0.531-42.034l-134.449-92.931l12.238-241.308L1705.06,1318.313z';
+			
+				
+				var convertData = function (data) {
+				    var res = [];
+				    for (var i = 0; i < data.length; i++) {
+				        var dataItem = data[i];
+				        var fromCoord = geoCoordMap[dataItem[0].name];
+				        var toCoord = geoCoordMap[dataItem[1].name];
+				        if (fromCoord && toCoord) {
+				            res.push({
+				                fromName: dataItem[0].name,
+				                toName: dataItem[1].name,
+				                coords: [fromCoord, toCoord]
+				            });
+				        }
+				    }
+				    return res;
+				};
+				console.log(convertData)
+				var color = ['#FFDE00', '#ffa022', '#46bee9'];
+				var series = [];
+				var echartName;
+				if(GZData.length>0){
+					echartName = GZData[0][0].name;
+				}else{
+					echartName=''
+				}
+				[[echartName, GZData]].forEach(function (item, i) {
+		
+					series.push({
+							name: item[0],
+							type: 'lines',
+							zlevel: 1,
+							effect: {
+								show: true,
+								period: 6,
+								trailLength: 0.7,
+								color: '#fff',
+								symbolSize: 3
+							},
+							lineStyle: {
+								normal: {
+									color: color[i],
+									width: 0,
+									curveness: 0.2
+								}
+							},
+							data: convertData(item[1])
+						},
+						{
+							name: item[0],
+							type: 'lines',
+							zlevel: 2,
+							symbol: ['none', 'arrow'],
+							symbolSize: 10,
+							effect: {
+								show: true,
+								period: 6,
+								trailLength: 0,
+			            	symbol: planePath,
+								symbolSize: 5
+							},
+							lineStyle: {
+								normal: {
+									color: color[i],
+									width: 1,
+									opacity: 0.6,
+									curveness: 0.2
+								}
+							},
+							data: convertData(item[1])
+						},
+						{
+							name: item[0],
+							type: 'effectScatter',
+							coordinateSystem: 'geo',
+							zlevel: 2,
+							tooltip:{
+								formatter:function(data){
+									return  data.data.name + ":" +  data.data.value[2]
+								}
+							},
+							rippleEffect: {
+								brushType: 'stroke'
+							},
+							label: {
+								normal: {
+									show: false,
+									position: 'right',
+									formatter: '{b}'
+								}
+							},
+							symbolSize: function (val) {
+								// return val[2] / 8;
+								return 8;
+							},
+							itemStyle: {
+								normal: {
+									color: color[i]
+								}
+							},
+							data: item[1].map(function (dataItem) {
+								console.log(geoCoordMap[dataItem[1].name])
+								console.log([dataItem[1].value])
+								return {
+									name: dataItem[1].name,
+									value: geoCoordMap[dataItem[1].name].concat([dataItem[1].value]),
+								};
+							})
+						});
+				});
+			
+				var option = {
+					tooltip : {
+						trigger: 'item'
+					},
+					geo: {
+						name: '区县地图',
+				        map: '五华区',
+				        label: {
+							normal:{
+								show:true,
+								color:'#65B8F8',
+								fontSize:12,
+								position: 'top'
+							},
+							emphasis: {
+								color:'#fff',
+							}
+						},
+				        roam: true,
+				        left:'10%',
+				        layoutCenter: ['50%', '50%'],
+						layoutSize:150,
+				        itemStyle: {
+				            normal: {
+				                areaColor:'#002342',
+								borderColor: '#00ADA4',
+								shadowColor: 'rgba(0, 170, 161, 0.5)',
+			    				shadowBlur: 50,
+			    				shadowOffsetX:-1,
+			    				shadowOffsetY:2
+				            },
+				            emphasis: {
+				                areaColor: '#2a333d'
+				            }
+				        }
+				    },
+					series: series
+				};
+				echart.on('click', function (param) {
+					if(param.data){
+					}
+				});
+				echart.clear();
+				$.get('五华区.json', function (data) {
+					echarts.registerMap('五华区', data);
+					echart.setOption(
+						option
+					);
+				});
+			}
+			/*异地监管情况*/
+			manage('map',[])
+		</script>
+	</body>
+</html>
